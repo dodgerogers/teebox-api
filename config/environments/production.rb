@@ -76,4 +76,22 @@ Rails.application.configure do
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
+  
+  # Controller settings
+  Rails.application.routes.default_url_options[:host] = 'teeboxnetwork.com'
+
+  # Mailer settings
+  config.action_mailer.default_url_options = {:host => 'teeboxnetwork.com'}
+  config.action_mailer.delivery_method = :smtp
+  
+  # Amazon SES
+  config.action_mailer.smtp_settings = {
+    address: "email-smtp.us-east-1.amazonaws.com",
+    domain: "<teeboxnetwork.com>",
+    port: 587,
+    authentication: :login,
+    user_name: CONFIG[:ses_smtp_username],
+    password: CONFIG[:ses_password],
+    enable_starttls_auto: true
+  }
 end

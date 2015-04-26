@@ -1,0 +1,14 @@
+<li class="dropdown-header" id="activities">Notifications</li>
+<table class="table teebox-table">
+	<% activities.each do |activity| %>
+		<% cache ["user_#{current_user.id}", activity] do %>
+		 	<tr class="<%= activity.read == false ? 'unread' : '' %>">
+				<%= render activity %>
+			</tr>
+		<% end %>
+	<% end %>
+</table>
+
+<% unless current_page?(activities_path) %>
+	<li><%= link_to "View All", activities_path  %></li>
+<% end %>

@@ -1,0 +1,5 @@
+<% meta_title("Notifications") %>
+
+<%= render partial: "activities/index", locals: { activities: @activities } %>
+
+<%= will_paginate @activities %>

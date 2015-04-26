@@ -38,4 +38,25 @@ Rails.application.configure do
 
   # Raises error for missing translations
   # config.action_view.raise_on_missing_translations = true
+  
+  # Mailer settings default to mailcatcher
+  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.default_url_options = { host: 'localhost:3000' }
+  config.action_mailer.delivery_method = :smtp
+  
+  config.action_mailer.smtp_settings = {
+    address: "email-smtp.us-east-1.amazonaws.com",
+    domain: "<localhost:3000>",
+    port: 587,
+    authentication: :login,
+    user_name: CONFIG[:ses_smtp_username],
+    password: CONFIG[:ses_password],
+    enable_starttls_auto: true
+  }
+      
+  config.after_initialize do
+    Bullet.enable = true
+    Bullet.rails_logger = true
+  end    
 end
