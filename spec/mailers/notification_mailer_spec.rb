@@ -2,20 +2,15 @@ require "spec_helper"
 
 describe NotificationMailer do
   before(:each) do
-    ActionMailer::Base.configure do |config|
-      config.perform_deliveries = true
-      p config.deliveries
-      config.deliveries = []
-    end
+    ActionMailer::Base.perform_deliveries = true
+    ActionMailer::Base.deliveries = []
     @user1 = create(:user, username: "dodgerogers")
     @question = create(:question, user_id: @user1.id)
   end
   
   after(:each) do
-    ActionMailer::Base.configure do |config|
-      config.deliveries.clear
-      config.perform_deliveries = false
-    end
+    ActionMailer::Base.deliveries.clear
+    ActionMailer::Base.perform_deliveries = false
   end
   
   describe "activity_email" do

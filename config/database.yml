@@ -2,7 +2,7 @@
 development:
   adapter: postgresql
   encoding: unicode
-  database: teebox_api_development
+  database: teebox_development
   pool: 5
   username: andrew
   password: 
