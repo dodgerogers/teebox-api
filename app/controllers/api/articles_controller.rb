@@ -1,95 +1,93 @@
 module Api
   class ArticlesController < ApplicationController
-    include Teebox::Commentable
-  
-    # before_filter :authenticate_user!, except: [:index, :show]
-    #   before_filter :set_article, except: [:new, :index, :create, :admin]
-    #   load_and_authorize_resource except: [:index, :show]
-  
-    def new
-      @article = Article.new
-    end
-  
+    load_and_authorize_resource except: [:show, :index]
+    
     def show
-      @latest = Article.state(Article::PUBLISHED).where('id not in (?)', @article.id).order('updated_at DESC').sample(3)
+      @article = Article.find params[:id]
       ImpressionRepository.create(@article, request)
+      render json: @article
     end
   
     def index
       @articles = Article.state(Article::PUBLISHED).order('published_at DESC').paginate(page: params[:page], per_page: 20)
-    end
-  
-    def edit
+      render json: @articles
     end
   
     def create
-      @article = current_user.articles.build(params[:article].except!(:state))
+      @article = current_user.articles.build(article_params)
       if @article.save
         PointRepository.create(@article.user, @article)
-        redirect_to @article, notice: 'Article Sucessfully created'
+        render json: @article
       else
-        render :new, notice: 'Please try again'
+        render json: { errors: @article.errors.full_messages }, status: 422
       end
     end
   
     def update
-      if @article.update_attributes(params[:article].except!(:state))
-        redirect_to edit_article_path(@article), notice: 'Updated successfully'
+      @article = Article.find params[:id]
+      if @article.update_attributes article_params
+        render json: @article, status: 200
       else
-        render :edit, notice: 'Please try again'
+        render json: { errors: @article.errors.full_messages }, status: 422
       end
     end
   
     def destroy
+      @article = Article.find params[:id]
       if @article.destroy
-        redirect_to articles_path, notice: 'Article deleted'
+        render json: {}, status: 200
       else
-        redirect_to articles_path, notice: 'Please try again'
+        render json: { errors: @article.errors.full_messages }, status: 422
       end
     end
   
     def admin
+      # TODO: Needs to be in an Interactor
       articles = Proc.new { |state, order| Article.state(state).order("#{order} DESC").paginate(page: params[:page], per_page: 20) }
       @published = articles.call(Article::PUBLISHED, 'published_at')
       @approved = articles.call(Article::APPROVED, 'created_at')
       @submitted = articles.call(Article::SUBMITTED, 'created_at')
+      render json: { published: @published, approved: @approved, submitted: @submitted }, status: 200
     end
   
     def draft
-      transition(@article, :draft)
+      transition :draft
     end
   
     def submit
-      transition(@article, :submit)
+      transition :submit
     end
   
     def approve
-      transition(@article, :approve, admin_articles_path)
+      transition :approve
     end
   
     def publish
-      transition(@article, :publish, admin_articles_path) do
-        repo = ActivityRepository.new(@article)
-        repo.generate(:create, owner: current_user, recipient: @article.user)
+      transition :publish do |article|
+        repo = ActivityRepository.new article
+        repo.generate :create, owner: current_user, recipient: article.user 
       end
     end
   
     def discard
-      transition(@article, :discard)
+      transition :discard
     end
   
     protected
-  
-    def transition(article, method, path=nil)
-      success, message = ArticleRepository.transition(article, method)
-      yield if block_given? && success
-      redirect_to (path || edit_article_path(article)), notice: message
+    
+    def transition(method)
+      article = Article.find params[:id]
+      success, message = ArticleRepository.transition article, method
+      if success
+        yield article if block_given?
+        render json: article, status: 200
+      else
+        render json: { errors: message }, status: 422
+      end
     end
-  
-    private
-  
-    def set_article
-      @article = Article.find(params[:id])
+    
+    def article_params
+      params.require(:article).permit(:title, :body, :points, :user_id, :cover_image, :published_at)
     end
   end
 end

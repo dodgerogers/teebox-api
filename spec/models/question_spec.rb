@@ -39,7 +39,7 @@ describe Question do
   end
   
   describe "exceed video_limit" do
-    before { subject.videos << video_list }
+    before { subject.videos << 4.times.map { create(:video) } }
     it { should_not be_valid }
   end
   

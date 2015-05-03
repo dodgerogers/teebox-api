@@ -25,6 +25,8 @@ end
 
 gem 'active_model_serializers', '~> 0.8.0'
 gem 'devise', '~> 3.4.1'
+gem 'warden', '~> 1.2.3'
+gem 'simple_token_authentication', '~> 1.0'
 gem 'jquery-rails'
 gem "whenever", :require => false
 gem 'will_paginate', '3.0.5'

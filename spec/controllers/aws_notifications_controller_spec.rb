@@ -1,7 +1,7 @@
 require "spec_helper"
 require "json"
 
-describe AwsNotificationsController do  
+describe Api::AwsNotificationsController do  
   describe "confirmation" do
     before(:each) do
       @confirmation_raw_json = '{

@@ -1,23 +1,15 @@
 module Api
   class PointsController < ApplicationController
-  
-    # before_filter :set_points
-    #   load_and_authorize_resource except: [:breakdown]
-  
+    load_and_authorize_resource except: [:index, :breakdown]
+    
     def index
-      @points = @load_points.paginate(page: params[:page], per_page: 12)
+      @points = current_user.points.paginate(page: params[:page], per_page: 12)
+      render json: @points, status: 200
     end
   
     def breakdown
-      @points = @load_points.limit(5)
-      render partial: "points/get_points", locals: { points: @points }
-    end
-  
-    private
-  
-    def set_points
-      @user = User.find(params[:id])
-      @load_points = Point.find_points(@user)
+      @points = current_user.points.limit(5)
+      render json: @points, status: 200
     end
   end
 end

@@ -1,25 +1,27 @@
 class ApplicationController < ActionController::API
-
-  after_filter :store_location
-  helper_method :resource_name, :resource, :devise_mapping
+  extend SimpleTokenAuthentication::ActsAsTokenAuthenticationHandler
+  include ActionController::RespondWith
+  include ActionController::StrongParameters
+  include CanCan::ControllerAdditions
+  
+  acts_as_token_authentication_handler_for User, fallback_to_devise: false
+  
+  before_action :cancan_patch
+  helper_method :user_authenticated?
   
   rescue_from CanCan::AccessDenied do |exception|
-    redirect_to root_path, alert: exception.message
+    render json: { errors: "You are not authorized to access this page" }, status: 403
   end
   
-  def store_location
-    session[:previous_url] = request.fullpath unless request.fullpath =~ /\/users/
+  def user_authenticated?
+    unless current_user
+      render json: { errors: "You must be logged in to access this content" }, status: 403
+    end
   end
   
-  def resource_name
-    :user
-  end
-
-  def resource
-    @resource ||= User.new
-  end
-
-  def devise_mapping
-    @devise_mapping ||= Devise.mappings[:user]
+  def cancan_patch
+    resource = controller_name.singularize.to_sym
+    method = "#{resource}_params"
+    params[resource] &&= send(method) if respond_to?(method, true)
   end
 end

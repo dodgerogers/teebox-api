@@ -1,53 +1,57 @@
 require 'spec_helper'
 
-describe UsersController do
+describe Api::UsersController do
   include Devise::TestHelpers
   before(:each) do
     @user = create(:user)
     @user.confirm!
-    sign_in @user
+    @params = { 
+      user_token: @user.authentication_token, 
+      user_email: @user.email,
+      search: 'driver'
+    }
   end
   
   describe "GET index" do
-    it "renders index template" do
+    it "returns 200 and user" do
       get :index
-      response.should render_template :index
+      response.status.should eq 200
     end
   end
   
   describe "GET show" do
-    it "assigns a new user as @user" do
-      get :show, id: @user
-      assigns(:user).should eq(@user)
-    end
-    
-    it "renders the show template" do
-      get :show, id: @user
-      response.should render_template :show
+    it "returns 200 and user" do
+      get :show, @params.merge(id: @user.id)
+      
+      response.status.should eq 200
+      result = JSON.parse response.body
+      result.should include 'user'
     end
   end
   
   describe "GET users objects " do
-    it "renders answers template" do
-      get :answers, id: @user.id
-      response.should render_template :answers
+    it "renders answers" do
+      get :answers, @params.merge(id: @user.id)
+      
+      response.status.should eq 200
+      result = JSON.parse response.body
+      result.should include 'answers'
     end
     
-    it "renders questions template" do
-      get :questions, id: @user.id
-      response.should render_template :questions
+    it "renders questions" do
+      get :questions, @params.merge(id: @user.id)
+      
+      response.status.should eq 200
+      result = JSON.parse response.body
+      result.should include 'questions'
     end
     
-    it "renders articles template" do
-      get :articles, id: @user.id
-      response.should render_template :articles
-    end
-  end
-  
-  describe "welcome_page" do
-    it "redirects to welcome path" do
-      get :welcome, id: @user.id
-      response.should render_template :welcome
+    it "renders articles" do
+      get :articles, @params.merge(id: @user.id)
+      
+      response.status.should eq 200
+      result = JSON.parse response.body
+      result.should include 'articles'
     end
   end
 end

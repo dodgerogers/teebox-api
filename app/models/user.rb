@@ -1,5 +1,4 @@
 class User < ActiveRecord::Base
-  #include PublicActivity::Common
   include Teebox::Searchable
   
   ADMIN = 'admin'
@@ -8,8 +7,9 @@ class User < ActiveRecord::Base
   
   ROLES = [ADMIN, TESTER, STANDARD]
   
-  devise :database_authenticatable, :registerable, :confirmable,
-             :recoverable, :rememberable, :trackable, :validatable
+  devise :database_authenticatable, :registerable, :confirmable, :recoverable, :rememberable, :trackable, :validatable
+             
+  acts_as_token_authenticatable      
   
   #attr_accessible :email, :password, :password_confirmation, :remember_me, :username, :reputation, :rank
   
@@ -27,6 +27,7 @@ class User < ActiveRecord::Base
   has_many :points, dependent: :destroy
   has_many :activities, foreign_key: :recipient_id, dependent: :destroy
 
+  before_save :ensure_authentication_token
   after_create :create_welcome_notification
   
   searchable :username

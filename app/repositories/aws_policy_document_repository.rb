@@ -4,6 +4,7 @@ class AwsPolicyDocumentRepository < BaseRepository
   DEFAULT_MAX_UPLOAD = 12582912
   DEFAULT_UPLOAD_PATH = "uploads/"
   
+  # TODO should have to intialize with a user
   def self.upload_policy
     Base64.encode64(
       {
@@ -22,7 +23,7 @@ class AwsPolicyDocumentRepository < BaseRepository
   def self.upload_signature
     Base64.encode64(
       OpenSSL::HMAC.digest(
-        OpenSSL::Digest::Digest.new('sha1'),
+        OpenSSL::Digest.new('sha1'),
         CONFIG[:aws_secret_key_id],
         self.upload_policy
       )

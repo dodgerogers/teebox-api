@@ -3,6 +3,7 @@ class ReportRepository < BaseRepository
   ACCEPTABLE_MODELS = ["question", "answer", "user"]
   IGNORED_KEYS = ['id', 'created_at', 'updated_at']
   
+  # TODO This should be a factory
   def self.generate(report)
     raise ArgumentError, sprintf(ERROR_MSG_GENERIC, "must supply a valid report object") unless report.is_a?(Report)
     

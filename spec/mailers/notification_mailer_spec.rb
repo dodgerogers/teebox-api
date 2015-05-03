@@ -18,7 +18,7 @@ describe NotificationMailer do
       @user2 = create(:user)
       @answer = create(:answer, user: @user2, question_id: @question.id, body: "try changing your face angle by #{@number} degrees")
       # Need all attributes of activity so render_activity uses the correct template_path
-      @activity = create(:activity, key: "answer.create", trackable_id: @answer.id, trackable_type: "Answer", owner_id: @user2.id, owner_type: "User", recipient_id: @user1.id, recipient_type: "User", trackable_type: "Answer", read: false)
+      @activity = create(:activity, key: "answer.create", trackable_id: @answer.id, trackable_type: "Answer", owner_id: @user2.id, owner_type: "User", recipient_id: @user1.id, recipient_type: "User", read: false)
       NotificationMailer.any_instance.unstub(:activity_email)
       NotificationMailer.activity_email(@activity).deliver_now
     end
