@@ -1,8 +1,6 @@
 module Api
   class VideosController < ApplicationController
-  
-    # before_filter :authenticate_user!
-    #   load_and_authorize_resource
+    load_and_authorize_resource
   
     def show
       @video = Video.find params[:id]
@@ -14,48 +12,41 @@ module Api
       render json: @videos
     end
   
-    def new   
-    end
-  
     def create
       # ====== Should be in interactor ======
-      @video = current_user.videos.build(params[:video])
+      @video = current_user.videos.build video_params
       if @video.save
         TranscoderRepository.generate(@video)
-        render json: @video, status: :created, location: @video
+        render json: @video
       else
-        render json: @video.errors, status: 422
+        render json: { errors: @video.errors }, status: 422
       end
     end
   
     def update
-      respond_to do |format|
-        if @video.update_attributes(video_params)
-          format.html { redirect_to @video, notice: "Video updated successfully" }
-          format.js
-        else
-          format.html { render :edit; flash[:error] = "Something went wrong. Plese try again." }
-          format.js
-        end
+      @video = Video.find params[:id]
+      if @video.update_attributes video_params
+         render json: @video
+      else
+        render json: { errors: @video.errors }, status: 422
       end
     end
   
     def destroy
-      # ======= Should be in an interactor ====== #
-      @video = Video.destroy(params[:id])
+      # ======= Should be in an repo ====== #
+      @video = Video.find params[:id]
       if @video.destroy
         @video.delete_aws_key
-        respond_to do |format|
-          format.html { redirect_to videos_path, notice: "Video deleted" }
-          format.js
-        end
+        render json: {}, status: 200
+      else
+        render json: { errors: @video.errors.full_messages }, status: 422
       end
     end
   
     private 
   
     def video_params
-      params[:video].slice(:name, :location)
+      params.require(:video).permit(:file, :screenshot, :job_id, :status, :name, :duration, :location)
     end
   end
 end

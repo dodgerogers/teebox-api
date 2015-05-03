@@ -16,6 +16,7 @@ describe User do
    it { should respond_to(:reputation)}
    it { should respond_to(:rank)}
    it { should respond_to(:notifications)}
+   it { should respond_to(:authentication_token)}
    it { should have_many(:questions)}
    it { should have_many(:articles)}
    it { should have_many(:videos)}
@@ -69,6 +70,12 @@ describe User do
     
     it "notifications set to true by default" do
       subject.notifications.should eq "1"
+    end
+  end
+  
+  describe "ensure_authentication_token" do
+    it "creates token" do
+      subject.authentication_token.should_not be_blank
     end
   end
   

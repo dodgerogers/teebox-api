@@ -1,57 +1,56 @@
 module Api
   class AnswersController < ApplicationController
-  
-    # before_filter :authenticate_user!, except: [:show]
-    #   load_and_authorize_resource
-    require 'teebox/commentable'
-    include Teebox::Commentable
-  
+    load_and_authorize_resource only: [:create, :update, :destroy, :correct]
+    
     def show
       @answer = Answer.find params[:id]
       render json: @answer
     end
   
     def create
-      # @answer = current_user.answers.build params[:answer]
-      @answer = Answer.new params[:answer]
-      respond_to do |format|
-        if @answer.save
-          PointRepository.create @answer.user, @answer
-          repo = ActivityRepository.new(@answer)
-          repo.generate :create, owner: current_user, recipient: @answer.question.user
-          render json: @answer
-        else
-          render json: { message: @answer.errors.full_messages }, status: 422
-        end
+      @answer = current_user.answers.build answer_params
+      if @answer.save
+        PointRepository.create @answer.user, @answer
+        repo = ActivityRepository.new @answer
+        repo.generate :create, owner: current_user, recipient: @answer.question.user
+        render json: @answer
+      else
+        render json: { errors: @answer.errors.full_messages }, status: 422
       end
     end
   
     def update
-      @answer = Answer.find(params[:id])
-      if @answer.update_attributes(params[:answer])
-          render json: @answer
+      @answer = Answer.find params[:id]
+      if @answer.update_attributes answer_params
+        render json: @answer
       else
-        render json: { message: @answer.errors.full_messages }, status: 422
+        render json: { errors: @answer.errors.full_messages }, status: 422
       end
     end
   
     def destroy
-      @answer = Answer.find(params[:id])
+      @answer = Answer.find params[:id]
       if @answer.destroy
          render json: {}, status: 200
       else
-        render json: { message: @answer.errors.full_messages }, status: 422
+        render json: { errors: @answer.errors.full_messages }, status: 422
       end
     end
   
     def correct 
-      @result = ToggleAnswerCorrect.call(params) 
+      @result = ToggleAnswerCorrect.call params[:id]
       if @result.success?
         @answer = @result.answer
         render json: @answer
       else
-        render json: { message: @answer.errors.full_messages }, status: 422
+        render json: { errors: @result.error }, status: 422
       end
+    end
+    
+    private 
+    
+    def answer_params
+      params.require(:answer).permit(:body, :question_id, :correct, :points)
     end
   end
 end

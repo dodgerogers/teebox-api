@@ -1,12 +1,10 @@
 module Api
   class UsersController < ApplicationController
-  
-    # before_filter :authenticate_user!, except: [:index, :show]
-    #   load_and_authorize_resource except: [:index, :show]
-    #   before_filter :set_user, except: :index
+    
+    load_and_authorize_resource except: [:index, :show]
+    before_action :set_user, only: [:show, :answers, :questions, :articles]
   
     def show
-      @user = User.find(params[:id])
       render json: @user
     end
   
@@ -15,19 +13,26 @@ module Api
       render json: @users
     end
   
+    # TODO: These should all just hit the various resource index actions with a user id
     def answers
       @answers = @user.answers.order("created_at desc").paginate(page: params[:page], per_page: 10).includes(:question)
-      render json: @answers
+      render json: { answers: @answers }
     end
   
     def questions
       @questions = @user.questions.order("created_at desc").paginate(page: params[:page], per_page: 10)
-      render json: @questions
+      render json: { questions: @questions }
     end
   
     def articles
       @articles = @user.articles.paginate(page: params[:page], per_page: 10)
-      render json: @articles
+      render json: { articles: @articles }
+    end
+    
+    private 
+    
+    def set_user
+      @user = User.find params[:id]
     end
   end
 end

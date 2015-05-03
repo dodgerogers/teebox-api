@@ -22,7 +22,7 @@ class Tag < ActiveRecord::Base
     if query.present?
       search(sanitize(query))
     else
-      scoped
+      all
     end
   end
   

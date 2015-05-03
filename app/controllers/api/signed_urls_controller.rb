@@ -1,8 +1,7 @@
 module Api
-    class SignedUrlsController < ApplicationController
-  
-    # before_filter :authenticate_user!
-  
+  class SignedUrlsController < ApplicationController
+    before_action :user_authenticated?
+    
     def index
       render json: {
         policy: AwsPolicyDocumentRepository.upload_policy,

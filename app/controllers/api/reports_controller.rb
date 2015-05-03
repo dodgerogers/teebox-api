@@ -1,36 +1,30 @@
 module Api
   class ReportsController < ApplicationController
-    # before_filter :authenticate_user! 
-    #   before_filter :all_reports, except: [:create, :destroy]
-    #   load_and_authorize_resource
-  
+    load_and_authorize_resource
+    
     def index
-      @report = Report.new
-    end
-  
-    def stats
+      @reports = Report.order("created_at")
+      render json: @reports
     end
   
     def create
+      # TODO This is weird, create an instance in the repo
       @report = Report.new
-      report_generated = ReportRepository.generate(@report)
-      if report_generated
-        redirect_to reports_path, notice: "Report Created"
+      success = ReportRepository.generate @report
+      if success
+        render json: @report, status: 200
       else
-        redirect_to reports_path, notice: "Nothing to report"
+        render json: { errors: @report.errors.full_messages }, status: 422
       end
     end 
   
     def destroy
-      @report = Report.destroy(params[:id])
+      @report = Report.find(params[:id])
       if @report.destroy
-        redirect_to stats_reports_path, notice: "Report deleted"
+        render json: @report, status: 200
+      else
+        render json: { errors: @report.errors.full_messages }, status: 422
       end
-    end
-  
-    def all_reports
-      @all_reports = Report.order("created_at")
-      @reports = Report.order("created_at DESC").paginate(page: params[:page], per_page: 20)
     end
   end
 end

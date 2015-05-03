@@ -1,124 +1,59 @@
 require 'spec_helper'
 
-describe QuestionsController do
+describe Api::QuestionsController do
   include Devise::TestHelpers
-  include AnswerHelper
   before(:each) do
     @user1 = create(:user)
     @user2 = create(:user)
     @user2.confirm!
     @user1.confirm!
-    sign_in @user1
-    sign_in @user2
     @question = create(:question, user: @user1)
-    controller.stub!(:current_user).and_return(@user1)
-    @vote = attributes_for(:question_vote, votable_id: @question.id, user_id: @user2, votable_type: "Question", value: 1)
-    @request.env['HTTP_REFERER'] = "/questions/#{@question}/"
+    @params = { 
+      user_token: @user1.authentication_token, 
+      user_email: @user1.email, 
+    }
   end
 
   describe "GET show" do
-    it "assigns a new decorator as @decorator" do
-      @decorator = @question
-      get :show, id: @decorator
-      assigns(:decorator).should eq(@decorator)
-    end
-    
-    it "renders the show template" do
-      get :show, id: @question
-      response.should render_template :show
-    end
-    
-    it "renders the show JSON template" do
-      get :show, id: @question, format: "json"
-      response.should be_success
-      response.content_type.should eq Mime::JSON
-    end
-    
-    it "creates an impression record" do
-      expect {
-        get :show, id: @question
-      }.to change(Impression, :count).by(1)
+    it "returns 200" do
+      ImpressionRepository.should_receive(:create).with(@question, request)
+      
+      get :show, @params.merge!(id: @question.id)
+      
+      response.status.should eq 200
+      result = JSON.parse response.body
+      result.should include 'question'
     end
   end
   
   describe "GET index" do
     it "renders index template" do
       get :index
-      response.should render_template :index
-    end
-    
-    it "renders index.js template" do
-      get :index, format: "js"
-      response.should be_success
-      response.content_type.should eq Mime::JS
+      response.status.should eq 200
+      result = JSON.parse response.body
+      result.should include 'questions'
     end
   end
   
-  describe "GET popular" do
-    it "renders popular template" do
-      get :popular
-      response.should render_template :popular
-    end
-  end
-  
-  describe "GET unanswered" do
-    it "renders unanswered template" do
-      get :unanswered
-      response.should render_template :unanswered
-    end
-  end
-  
-  describe "GET related" do
-    it "renders related template" do
-      get :related, id: @question.id
-      response.should render_template :related
-    end
-  end
-
-  describe "GET new" do
-    it "assigns a new question as @question" do
-      get :new
-      assigns(:question).should be_a_new(Question)
-    end
-  end
-
   describe "POST create" do
-    describe "with valid params" do
-      it "saved a new question to db" do
-        expect {
-          post :create, question: attributes_for(:question), user: @user1
-        }.to change(Question, :count).by(1)
-      end
-      
-      it "also creates question point" do
-        expect {
-          post :create, question: attributes_for(:question), user: @user1
-        }.to change(Point, :count).by(1)
-      end
-
-      it "assigns a newly created question as @question" do
-        post :create, question: attributes_for(:question), user: @user1
-        assigns(:question).should be_a(Question)
-        assigns(:question).should be_persisted
-      end
-
-      it "redirects to the created question" do
-        post :create, question: attributes_for(:question), user: @user1
-        response.should redirect_to(Question.last)
+    describe "success" do
+      it "returns 200 and question" do
+        post :create, @params.merge(question: { title: 'Question title', body: 'question body content' })
+        
+        response.status.should eq 200
+        result = JSON.parse response.body
+        result.should include 'question'
       end
     end
 
-    describe "with invalid params" do
-      it "assigns a newly created but unsaved question as @question" do
+    describe "failure" do
+      it "returns 422 and errors" do
         Question.any_instance.stub(:save).and_return(false)
-        post :create, question: attributes_for(:question), user: @user1
-        assigns(:question).should be_a_new(Question)
-      end
-
-      it "re-renders the 'new' template" do
-        Question.any_instance.stub(:save).and_return(false)
-        post :create, question: attributes_for(:question), user: @user1
-        response.should render_template("new")
+        post :create, @params.merge(question: { title: 'Question title', body: 'question body content' })
+        
+        response.status.should eq 422
+        result = JSON.parse response.body
+        result.should include 'errors'
       end
     end
   end
@@ -139,73 +74,55 @@ describe QuestionsController do
     end
     
     it "successfully sends after create" do
-      post :create, question: attributes_for(:question), user: @user1
+      post :create, @params.merge(question: attributes_for(:question))
+      
+      response.status.should eq 200
       ActionMailer::Base.deliveries.count.should eq 1
     end
   end
 
   describe "PUT update" do
-    before(:each) do
-      @question = create(:question, user: @user1, title: "now im hooking it!", body: "ball is going to the left")
-    end
-    
-    it "assigns the requested question as @question" do
-      put :update, id: @question, question: attributes_for(:question)
-      assigns(:question).should eq(@question)
-    end
-    
-    describe "with valid params" do
-      it "updates the requested question" do
-        put :update, id: @question, question: attributes_for(:question, title: "Shanking now, great!"), user: @user1
-        @question.reload
-        @question.title.should eq("Shanking now, great!")
-      end
-
-      it "redirects to the post" do
-        put :update, id: @question, question: attributes_for(:question, title: "Shanking now, great!"), user: @user1
-        @question.reload
-        response.should redirect_to @question
+    context 'success' do
+      it "returns 200 and question" do
+        put :update, @params.merge(id: @question.id, question: {title: "Shanking now, great!"})
+       
+        response.status.should eq 200
+        result = JSON.parse response.body
+        result.should include 'question'
       end
     end
 
-    describe "with invalid params" do
-      it "doesn not change @question attributes" do
-        put :update, id: @question, question: attributes_for(:question, title: ""), user: @user1
-        @question.reload
-        @question.title.should_not eq("")
+    context "failure" do
+      it "returns 422 and errors" do
+        Question.any_instance.stub(:save).and_return(false)
+        put :update, @params.merge(id: @question.id, question: {title: "Shanking now, great!"})
+       
+        response.status.should eq 422
+        result = JSON.parse response.body
+        result.should include 'errors'
       end
     end
   end
 
   describe "DELETE destroy" do
-    before(:each) do
-      @question = create(:question, user: @user1)
+    context 'success' do
+      it "returns 200" do
+        delete :destroy, @params.merge(id: @question.id)
+      
+        response.status.should eq 200
+      end
     end
     
-    it "destroys the requested question" do
-      expect {
-        delete :destroy, id: @question
-      }.to change(Question, :count).by(-1)
-    end
-
-    it "redirects to the questions list" do
-      delete :destroy, id: @question
-      response.should redirect_to root_path
-    end
-    
-    it "delets association: point" do
-      post :create, question: attributes_for(:question), user: @user1
-      expect {
-        delete :destroy, id: Question.last
-      }.to change(Point, :count).by(-1)
-    end
-    
-    it "deletes association: impressions" do
-      post :create, question: attributes_for(:question), user: @user1
-      get :show, id: Question.last
-      expect {
-        delete :destroy, id: Question.last
-      }.to change(Impression, :count).by(-1)
+    context 'failure' do
+      it 'returns 422 and errors' do
+        Question.any_instance.stub(:destroy).and_return(false)
+        
+        delete :destroy, @params.merge(id: @question.id)
+      
+        response.status.should eq 422
+        result = JSON.parse response.body
+        result.should include 'errors'
+      end
     end
   end
 end

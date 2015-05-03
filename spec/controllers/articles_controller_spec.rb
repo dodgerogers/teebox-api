@@ -1,297 +1,239 @@
 require 'spec_helper'
 
-describe ArticlesController do
+describe Api::ArticlesController do
   include Devise::TestHelpers
   before(:each) do
     @user = create(:user)
     @user.confirm!
-    sign_in @user
     @article = create(:article, user: @user)
-    controller.stub!(:current_user).and_return(@user)
-    @vote = attributes_for(:vote, votable_id: @article.id, votable_type: @article.class.to_s, user: @user, value: 1)
-    @request.env['HTTP_REFERER'] = "/articles/#{@article.id}/"
+    @params = { 
+      user_token: @user.authentication_token, 
+      user_email: @user.email, 
+    }
   end
   
   describe "GET show" do
-    it "assigns a new article as @article" do
-      get :show, id: @article
-      assigns(:article).should eq(@article)
+    it "returns article and 200" do
+      get :show, @params.merge(id: @article.id)
+      
+      response.status.should eq 200
+      result = JSON.parse response.body
+      result.should include 'article'
     end
     
-    it "renders the show template" do
-      get :show, id: @article
-      response.should render_template :show
-    end
-    
-    it "creates an impression record" do
-      expect {
-        get :show, id: @article
-      }.to change(Impression, :count).by(1)
+    it "calls an impression create" do
+      ImpressionRepository.should_receive(:create).with(@article, request).and_return(true)
+      
+      get :show, @params.merge(id: @article.id)
+      
+      response.status.should eq 200
+      result = JSON.parse response.body
+      result.should include 'article'
     end
   end
   
   describe "GET index" do
     it "renders index template" do
       get :index
-      response.should render_template :index
+      response.status.should eq 200
+      result = JSON.parse response.body
+      result.should include 'articles'
     end
   end
   
   describe "GET admin_articles" do
     context 'as admin' do
       before(:each) do
-        @user = create(:user, role: 'admin')
-        @user.confirm!
-        sign_in @user
+        @admin_user = create(:user, role: 'admin')
+        @admin_user.confirm!
         @article = create(:article, user: @user)
-        controller.stub!(:current_user).and_return(@user)
+        @params = { 
+          user_token: @admin_user.authentication_token, 
+          user_email: @admin_user.email, 
+        }
       end
       
-      it "renders index template" do
-        get :admin
-        response.should render_template :admin
+      it "renders index and 200" do
+        get :admin, @params
+        response.status.should eq 200
       end
     end
     
     context 'as standard user' do
       before(:each) do
-        @user1 = create(:user, role: 'standard')
-        @user1.confirm!
-        sign_in @user1
-        controller.stub!(:current_user).and_return(@user1)
+        @standard_user = create(:user, role: 'standard')
+        @standard_user.confirm!
+        @params = { 
+          user_token: @standard_user.authentication_token, 
+          user_email: @standard_user.email, 
+        }
       end
       
-      it "redirects to the home page" do
-        get :admin
-        response.should redirect_to :root
+      it "renders json errors and 403" do
+        get :admin, @params
+        response.status.should eq 403
       end
-    end
-  end
-
-  describe "GET new" do
-    it "assigns a new article as @article" do
-      get :new
-      assigns(:article).should be_a_new(Article)
     end
   end
 
   describe "POST create" do
     describe "with valid params" do
-      it "saved a new article to db" do
-        expect {
-          post :create, article: attributes_for(:article), user: @user
-        }.to change(Article, :count).by(1)
-      end
-      
-      it "also creates article point" do
-        expect {
-          post :create, article: attributes_for(:article), user: @user
-        }.to change(Point, :count).by(1)
-      end
-
-      it "assigns a newly created article as @article" do
-        post :create, article: attributes_for(:article), user: @user
-        assigns(:article).should be_a(Article)
-        assigns(:article).should be_persisted
-      end
-
-      it "redirects to the created article" do
-        post :create, article: attributes_for(:article), user: @user
-        response.should redirect_to(Article.last)
+      it "returns 200 and article" do
+        post :create, @params.merge(article: { title: "Some title", body: 'some body text', cover_image: 'image.jpg'})
+        
+        response.status.should eq 200
+        result = JSON.parse response.body
+        result.should include 'article'
       end
     end
 
     describe "with invalid params" do
-      it "assigns a newly created but unsaved article as @article" do
+      it "returns 422 and errors" do
         Article.any_instance.stub(:save).and_return(false)
-        post :create, article: attributes_for(:article), user: @user
-        assigns(:article).should be_a_new(Article)
-      end
-
-      it "re-renders the 'new' template" do
-        Article.any_instance.stub(:save).and_return(false)
-        post :create, article: attributes_for(:article), user: @user
-        response.should render_template("new")
+        post :create, @params.merge(article: { title: "Some title", body: 'some body text'})
+        
+        response.status.should eq 422
+        result = JSON.parse response.body
+        result.should include 'errors'
       end
     end
   end
 
   describe "PUT update" do
-    before(:each) do
-      @article = create(:article, user: @user, title: "now im hooking it!", body: "ball is going to the left")
-    end
-    
-    it "assigns the requested article as @article" do
-      put :update, id: @article, article: attributes_for(:article)
-      assigns(:article).should eq(@article)
-    end
-    
-    describe "with valid params" do
-      it "updates the requested article" do
-        put :update, id: @article, article: attributes_for(:article, title: "Shanking now, great!"), user: @user
-        @article.reload
-        @article.title.should eq("Shanking now, great!")
-      end
-
-      it "redirects to the post" do
-        put :update, id: @article, article: attributes_for(:article, title: "Shanking now, great!"), user: @user
-        @article.reload
-        response.should redirect_to edit_article_path(@article)
+    context "with valid params" do
+      it "returns 200 and article" do
+        put :update, @params.merge(id: @article, article: { title: "Shanking now, great!" })
+        
+        response.status.should eq 200
+        result = JSON.parse response.body
+        result.should include 'article'
       end
     end
 
-    describe "with invalid params" do
-      it "doesn not change @article attributes" do
-        put :update, id: @article, article: attributes_for(:article, title: ""), user: @user
-        @article.reload
-        @article.title.should_not eq("")
+    context "with invalid params" do
+      it "returns 422 and errors" do
+        Article.any_instance.stub(:save).and_return(false)
+        put :update, @params.merge(id: @article, article: { title: "Shanking now, great!" })
+        
+        response.status.should eq 422
+        result = JSON.parse response.body
+        result.should include 'errors'
       end
     end
   end
   
   describe "DELETE destroy" do
-    before(:each) do
-      @article = create(:article, user: @user)
-    end
-    
-    context 'successfull' do
-      it "destroys the requested article" do
-        expect {
-          delete :destroy, id: @article
-        }.to change(Article, :count).by(-1)
-      end
-
-      it "redirects to index" do
-        delete :destroy, id: @article
-        response.should redirect_to articles_path
-      end
-    
-      it "delets association: point" do
-        post :create, article: attributes_for(:article), user: @user
-        expect {
-          delete :destroy, id: Article.last
-        }.to change(Point, :count).by(-1)
-      end
-    
-      it "deletes association: impressions" do
-        post :create, article: attributes_for(:article), user: @user
-        get :show, id: Article.last
-        expect {
-          delete :destroy, id: Article.last
-        }.to change(Impression, :count).by(-1)
+    context 'success' do
+      it "returns 200" do
+        delete :destroy, @params.merge(id: @article.id)
+        response.status.should eq 200
       end
     end
     
     context 'failure' do
-      before(:each) do
+      it 'returns 422 and errors' do
         Article.any_instance.stub(:destroy).and_return(false)
-      end
-      
-      it 'does not delete article' do
-         expect {
-          delete :destroy, id: @article
-        }.to_not change(Article, :count).by(-1)
-      end
-      
-      it 're renders the article' do
-        delete :destroy, id: @article
-        response.should redirect_to articles_path
+        delete :destroy, @params.merge(id: @article.id)
+        
+        response.status.should eq 422
+        result = JSON.parse response.body
+        result.should include 'errors'
       end
     end
   end
   
   describe 'transitions' do
-    context 'successful' do
-      before(:each) do
-        @article = create(:article)
-      end
-    
+    context 'success' do
       context 'draft' do
-        it 'redirects to article on success' do
-          Article.any_instance.stub(:draft).and_return(true, 'Successful')
+        it 'returns 200' do
+          ArticleRepository.stub(:transition).and_return(true, 'Successful')
           
-          put :draft, id: @article
+          put :draft, @params.merge(id: @article.id)
         
-          response.status.should eq 302
-          response.should redirect_to edit_article_path(@article)
+          response.status.should eq 200
+          result = JSON.parse response.body
+          result.should include 'article'
         end
       end
     
       context 'submit' do
-        it 'redirects to article on success' do
-          Article.any_instance.stub(:submit).and_return(true, 'Successful')
+        it 'returns 200' do
+          ArticleRepository.stub(:transition).and_return(true, 'Successful')
           
-          put :submit, id: @article
+          put :submit, @params.merge(id: @article.id)
         
-          response.status.should eq 302
-          response.should redirect_to edit_article_path(@article)
+          response.status.should eq 200
+          result = JSON.parse response.body
+          result.should include 'article'
         end
       end
     
       context 'approve' do
-        it 'redirects to article on success' do
-          Article.any_instance.stub(:approve).and_return(true, 'Successful')
+        it 'returns 200' do
+          ArticleRepository.stub(:transition).and_return(true, 'Successful')
           
-          put :approve, id: @article
+          put :approve, @params.merge(id: @article.id)
         
-          response.status.should eq 302
-          response.should redirect_to admin_articles_path
+          response.status.should eq 200
+          result = JSON.parse response.body
+          result.should include 'article'
         end
         
-        it 'redirects to unauthorized for standard user' do
+        it 'returns 403 for unauthorized user' do
           standard_user = create(:user, role: User::STANDARD)
           standard_user.confirm!
-          sign_in standard_user
           
-          controller.stub!(:current_user).and_return(standard_user)
+          put :approve, { id: @article.id, user_token: standard_user.authentication_token, user_email: standard_user.email }
           
-          put :approve, id: @article
-          
-          response.should redirect_to root_path
+          response.status.should eq 403
+          result = JSON.parse response.body
+          result.should include 'errors'
         end
       end
     
       context 'publish' do
-        it 'redirects to admin article index on success' do
-          Article.any_instance.stub(:publish).and_return(true, 'Successful')
+        it 'returns 200' do
+          ArticleRepository.stub(:transition).and_return(true, 'Successful')
           
-          put :publish, id: @article
+          put :publish, @params.merge(id: @article.id)
         
-          response.status.should eq 302
-          response.should redirect_to admin_articles_path
+          response.status.should eq 200
+          result = JSON.parse response.body
+          result.should include 'article'
         end
         
         it "calls point and notification creation methods when differing answer and question users" do
-          Article.any_instance.stub(:publish).and_return(true, 'Successful')
-          Activity.destroy_all
-          ActivityRepository.any_instance.should_receive(:generate).and_return(create(:activity))
+          ArticleRepository.stub(:transition).and_return(true, 'Successful')
+          ActivityRepository.any_instance.should_receive(:generate)
 
-          put :publish, id: @article
+          put :publish, @params.merge(id: @article.id)
 
-          Activity.all.size.should eq 1
+          response.status.should eq 200
+          result = JSON.parse response.body
+          result.should include 'article'
         end
         
         it 'redirects to unauthorized for standard user' do
           standard_user = create(:user, role: User::STANDARD)
           standard_user.confirm!
-          sign_in standard_user
           
-          controller.stub!(:current_user).and_return(standard_user)
+          put :publish, { id: @article.id, user_token: standard_user.authentication_token, user_email: standard_user.email }
           
-          put :publish, id: @article
-        
-          response.should redirect_to root_path
+          response.status.should eq 403
+          result = JSON.parse response.body
+          result.should include 'errors'
         end
       end
     
       context 'discard' do
         it 'redirects to article on success' do
-          Article.any_instance.stub(:discard).and_return(true, 'Successful')
+          ArticleRepository.stub(:transition).and_return(true, 'Successful')
           
-          put :discard, id: @article
+          put :discard, @params.merge(id: @article.id)
         
-          response.status.should eq 302
-          response.should redirect_to edit_article_path(@article)
+          response.status.should eq 200
+          result = JSON.parse response.body
+          result.should include 'article'
         end
       end
     end

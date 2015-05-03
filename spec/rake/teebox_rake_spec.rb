@@ -1,6 +1,6 @@
 require 'spec_helper'
 require 'rake'
-TeeboxNetwork::Application.load_tasks
+TeeboxApi::Application.load_tasks
 
 describe "rank_users" do
   it "should rank the users" do

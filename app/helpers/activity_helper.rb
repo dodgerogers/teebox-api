@@ -45,8 +45,10 @@ module ActivityHelper
     capture do
       content_tag(:td) do
         content_tag(:div, class: 'message') do
+          # NEED THIS
           concat link_to user.try(:username), user_url(user)
           concat " #{text} ".html_safe
+          # NEED THIS
           concat link_to link, read_activity_url(activity)
           concat '<br>'.html_safe
           concat activity_timestamp(activity)

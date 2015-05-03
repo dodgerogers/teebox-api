@@ -1,59 +1,54 @@
 module Api
   class TagsController < ApplicationController
-  
-    # before_filter :authenticate_user!, except: :index
-    #   load_and_authorize_resource
-  
-    def new
-      @tag = Tag.new
-    end
+    load_and_authorize_resource only: [:create, :update, :destroy]
   
     def show
       @tag = Tag.find(params[:id])
+      render json: @tag
     end
   
     def index
-      @tag = Tag.new
       @tags = Tag.order("name").paginate(page: params[:page], per_page: 21).text_search(params[:search])
+      render json: @tags
     end
   
     def create
-      @tag = Tag.create(params[:tag])
+      @tag = current_user.tags.build tag_params
       if @tag.save
-        redirect_to tags_path, notice: "Tag created" 
+        render json: @tag
       else
-        render :new, notice: "Try again" 
+        render json: { errors: @tag.errors.full_messages }, status: 422
       end
     end
   
     def update
-      @tag = Tag.find(params[:id])
-      @tag.user_id, @tag.updated_by = current_user.id, current_user.username
-      respond_to do |format|
-        if @tag.update_attributes(params[:tag])
-          format.html {  redirect_to tags_path, notice: "Tag updated" }
-          format.json { head :no_content }
-        else
-          format.html { render :edit, notice: "Try again"  }
-          format.json { render json: @tag.errors, status: :unprocessable_entity  }
-        end
+      @tag = Tag.find params[:id]
+      if @tag.update_attributes tag_params
+        render json: @tag
+      else
+        render json: { errors: @tag.errors.full_messages }, status: 422
       end
     end
   
-    def edit
-      @tag = Tag.find(params[:id])
-    end
-  
     def destroy
-      @tag = Tag.find(params[:id]).destroy
-      redirect_to tags_path, notice: "Tag Deleted"
+      @tag = Tag.find params[:id]
+      if @tag.destroy
+        render json: {}, status: 200
+      else
+        render json: { errors: @tag.errors.full_messages }, status: 422
+      end
     end
   
     def question_tags
       @tags = Tag.order(:name)
-      respond_to do |format|
-        format.json { render json: @tags.tokens(params[:q]) }
-      end
+      render json: @tags.tokens(params[:q])
+    end
+    
+    private 
+    
+    def tag_params
+      defaults = { updated_by: current_user.username, user_id: current_user.id }
+      params.require(:tag).permit(:name, :explanation, :updated_by, :user_id).merge(defaults)
     end
   end
 end

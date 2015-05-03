@@ -6,11 +6,8 @@ class VideoRepository < BaseRepository
     
     if video && attrs[:status] == AwsVideoPayloadRepository::COMPLETED_STATUS
       aws = AWS::S3.new
-      p aws.buckets
       bucket = aws.buckets[CONFIG[:s3_bucket]]
-      p bucket
       object = bucket.objects[video.aws_file_key]
-      p object
       object.delete if object
  
       attrs.merge!(file: attrs[:file], screenshot: attrs[:screenshot])

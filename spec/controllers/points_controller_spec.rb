@@ -1,24 +1,32 @@
 require "spec_helper"
 
-describe PointsController do
+describe Api::PointsController do
   before(:each) do
     @user = create(:user)
     @user.confirm!
-    sign_in @user
-    controller.stub(:current_user).and_return(@user)
+    @params = { 
+      user_token: @user.authentication_token, 
+      user_email: @user.email, 
+    }
   end
   
   describe "GET index" do
-    it "renders index template" do
-      get :index, id: @user.id
-      response.should render_template :index
+    it "returns 200" do
+      get :index, @params
+      
+      result = JSON.parse response.body
+      result.should include 'points'
+      response.status.should eq 200
     end
   end
   
   describe "GET breakdown" do
-    it "fetches points with 200" do
-      get :breakdown, id: @user.id
-      response.status.should be(200)
+    it "returns 200" do
+      get :breakdown, @params
+      
+      result = JSON.parse response.body
+      result.should include 'points'
+      response.status.should eq 200
     end
   end
 end

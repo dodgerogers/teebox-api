@@ -1,14 +1,15 @@
 require 'spec_helper'
 
-describe SearchController do
+describe Api::SearchController do
   include Devise::TestHelpers
   before(:each) do
     @user = create(:user)
     @user.confirm!
-    sign_in @user
-    
-    controller.stub!(:current_user).and_return(@user)
-    @request.env['HTTP_REFERER'] = "/"
+    @params = { 
+      user_token: @user.authentication_token, 
+      user_email: @user.email,
+      search: 'driver'
+    }
   end
 
   describe "GET search" do
@@ -20,35 +21,37 @@ describe SearchController do
       @question1 = create(:question, user: @user, title: "How do i improve my driver")
       @question2 = create(:question, user: @user, title: "How do i improve my chipping")
       @question3 = create(:question, user: @user, title: "Tiger woods through the years")
-      
-      @params = { "search" => 'driver' }
     end
     
-    context 'with valid params' do
-      it "with valid params assigns results and renders index" do
+    context 'success' do
+      it "returns 200 and result collection" do
         collection = { 
           articles: [@article1], 
           questions: [@question1] 
         }
         
-        result = mock()
-        GlobalSearch.should_receive(:call).with(@params).and_return(result)
-        result.should_receive(:success?).and_return(true)
-      
+        result = double('result', collection: collection, success?: true, total: collection.values.map(&:size).reduce(:+))
+        GlobalSearch.should_receive(:call).and_return(result)
+        
         get :index, @params
-        response.should render_template :index
+        
+        response.status.should eq 200
+        result = JSON.parse response.body
+        result.should include 'collection'
+        result.should include 'total'
       end
     end
     
-    context 'invalid params' do
-      it 'renders the root path' do
-        result = mock()
-        GlobalSearch.should_receive(:call).with(@params).and_return(result)
-        result.should_receive(:success?).and_return(false)
-        result.should_receive(:message).and_return('failure')
+    context 'failure' do
+      it 'returns 422 and errors' do
+        result = double('result', success?: false, message: 'failure')
+        GlobalSearch.should_receive(:call).and_return(result)
         
         get :index, @params
-        response.should redirect_to root_path 
+        
+        response.status.should eq 422
+        result = JSON.parse response.body
+        result.should include 'message'
       end
     end 
   end
