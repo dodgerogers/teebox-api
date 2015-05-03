@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe User do
   before(:each) do
-    @user = create(:user)
+    @user = build(:user)
     User.any_instance.unstub(:send_on_create_confirmation_instructions)
     Devise::Mailer.stub(:delay).and_return(Devise::Mailer)
   end
@@ -48,7 +48,8 @@ describe User do
   
   describe "to_param" do
     it "returns id and username string" do
-      subject.to_param.should eq "#{@user.id}-#{@user.username}"
+      user = create(:user)
+      user.to_param.should eq "#{user.id}-#{user.username}"
     end
   end
   
@@ -73,12 +74,6 @@ describe User do
     end
   end
   
-  describe "ensure_authentication_token" do
-    it "creates token" do
-      subject.authentication_token.should_not be_blank
-    end
-  end
-  
   describe "create_welcome_notification" do
     it "triggers ActivityRepository#generate" do
       ActivityRepository.any_instance.should_receive(:generate)
@@ -94,17 +89,21 @@ describe User do
   end
   
   describe "ranking" do
+    before :each do
+      @user1 = create(:user)
+    end
+    
     describe "rank_by_reputation" do
       it "returns hash, rep as key, array of ids as values" do
-        User.rank_by_reputation.should include(200=>[subject.id]) 
+        User.rank_by_reputation.should include(200=>[@user1.id]) 
       end
    end
     
     describe "rank_users" do
       it "updates subject rank to 1" do
         User.rank_users
-        subject.reload
-        subject.rank.should eq 1
+        @user1.reload
+        @user1.rank.should eq 1
       end
     end
   end

@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Article do
   before(:each) do
-    @article = create(:article)
+    @article = build(:article)
   end
   
   subject { @article }
@@ -24,7 +24,8 @@ describe Article do
   
   describe 'to_param' do
     it 'returns dasherized string' do
-      @article.to_param.should eq "#{@article.id}-#{@article.title.downcase.split(' ').join('-')}"
+      article = create(:article)
+      article.to_param.should eq "#{article.id}-#{article.title.downcase.split(' ').join('-')}"
     end
   end
   
@@ -60,7 +61,7 @@ describe Article do
   
   describe 'state machine' do
     before(:each) do 
-      @article = create(:article)
+      @article = build(:article)
     end
     
     context 'valid transitions' do

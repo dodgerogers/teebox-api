@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe Statistics::Social do
   before(:each) do
-    @social = create(:social)
+    @social = build(:social)
   end
   
   subject { @social }

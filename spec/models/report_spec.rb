@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe Report do
   before(:each) do
-    @report = create(:report)
+    @report = build(:report)
   end
   
   subject { @report }

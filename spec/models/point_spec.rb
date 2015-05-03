@@ -2,12 +2,12 @@ require "spec_helper"
 
 describe Point do
   before(:each) do
-    @user2 = create(:user)
-    @user = create(:user)
-    @question = create(:question, user: @user2)
-    @answer = create(:answer, user: @user, question_id: @question.id)
-    @vote = create(:vote, user: @user2, votable: @answer)
-    @point = create(:point, pointable: @vote, user_id: @user.id)
+    @user2 = build(:user)
+    @user = build(:user)
+    @question = build(:question, user: @user2)
+    @answer = build(:answer, user: @user, question: @question)
+    @vote = build(:vote, user: @user2, votable: @answer)
+    @point = build(:point, pointable: @vote, user: @user)
   end
   
   subject { @point }
@@ -19,7 +19,10 @@ describe Point do
   
   describe "find_points" do
     it "return array of scoped point objects" do
-      Point.find_points(@user).should eq [@point]
+      user = create(:user)
+      point = create(:point, pointable: @vote, user: user)
+      
+      Point.find_points(user).should eq [point]
     end
   end
 end
