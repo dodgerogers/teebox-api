@@ -3,7 +3,7 @@ require "json"
 
 describe Video do
   before(:each) do
-    @video = create(:video)
+    @video = build(:video)
   end
   
   subject { @video }

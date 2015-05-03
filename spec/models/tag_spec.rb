@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe Tag do
   before(:each) do
-    @tag = create(:tag, name: "Driver")
+    @tag = build(:tag, name: "Driver")
   end
   
   subject { @tag }
@@ -33,9 +33,11 @@ describe Tag do
    
    describe "tag_cloud" do
      it "lists most popular tags" do
-       @question = create(:question)
-       @tagging = create(:tagging, question_id: @question.id, tag_id: @tag.id)
-       Tag.cloud.should include(@tag)
+       tag = create(:tag)
+       question = create(:question)
+       tagging = create(:tagging, question_id: question.id, tag_id: tag.id)
+
+       Tag.cloud.should include(tag)
      end
    end
    
@@ -49,7 +51,8 @@ describe Tag do
      end
      
      it "returns tags when a match is found" do
-       Tag.tokens("driver").should include(@tag)
+       tag = create(:tag, name: 'driver')
+       Tag.tokens("driver").should include(tag)
      end
    end
    
@@ -59,7 +62,7 @@ describe Tag do
      end
       
      it 'should return similar tags' do
-       Tag.text_search("driver").should include(@tag)
+       Tag.text_search("Putting").should include(@tag2)
      end
      
      it "shoud return an empty array when no matches found" do

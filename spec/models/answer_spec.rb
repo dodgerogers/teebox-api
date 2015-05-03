@@ -3,11 +3,11 @@ require "spec_helper"
 describe Answer do  
   before(:each) do
     #move this to helper as it shares code with correct answer spec
-    @user1 = create(:user)
-    @user2 = create(:user)
-    @question = create(:question, user_id: @user1.id)
-    @answer = create(:answer, correct: false, user: @user1, body: "You can still hook the ball with a weak grip", question_id: @question.id)
-    @answer2 = create(:answer, user_id: @user2.id, question_id: @question.id, correct: true)
+    @user1 = build(:user)
+    @user2 = build(:user)
+    @question = build(:question, user: @user1)
+    @answer = build(:answer, correct: false, user: @user1, body: "You can still hook the ball with a weak grip", question: @question)
+    @answer2 = build(:answer, user: @user2, question: @question, correct: true)
   end
   
   subject { @answer }
@@ -56,7 +56,9 @@ describe Answer do
   
   describe "to_param" do
     it "appends question title to url" do
-      subject.to_param.should eq "#{subject.id}-#{subject.question.title.parameterize}"
+      question = create(:question)
+      answer = create(:answer, question_id: question.id)
+      answer.to_param.should eq "#{answer.id}-#{answer.question.title.parameterize}"
     end
   end
   
@@ -88,12 +90,16 @@ describe Answer do
   end
   
   describe "Scopes" do
-    it "returns an array sorted by votes" do
+    before :each do
       @user3 = create(:user)
       @user4 = create(:user)
-      a1 = create(:answer, user: @user3, correct: false, body: "your weight shift is incorrect", votes_count: 2, question_id: @question.id) 
-      a2 = create(:answer, user: @user4, correct: false, body: "stop moving your head", votes_count: 3, question_id: @question.id) 
-      Answer.by_votes.should == [a2, a1, subject, @answer2] 
+      @question = create(:question, user: @user3)
+      @a1 = create(:answer, user: @user3, correct: false, body: "your weight shift is incorrect", votes_count: 2, question_id: @question.id) 
+      @a2 = create(:answer, user: @user4, correct: false, body: "stop moving your head", votes_count: 3, question_id: @question.id)
+    end
+    
+    it "returns an array sorted by votes" do
+      Answer.by_votes.should == [@a2, @a1] 
     end
   end
 end

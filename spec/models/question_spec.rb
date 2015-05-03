@@ -5,8 +5,8 @@ include QuestionHelper
 
 describe Question do
   before(:each) do
-    @user = create(:user)
-    @question = create(:question, user: @user)
+    @user = build(:user)
+    @question = build(:question, user: @user)
   end
   
   subject { @question }
@@ -45,7 +45,7 @@ describe Question do
   
   describe 'self.videos' do
     before(:each) do
-      @video = create(:video, user: @user)
+      @video = build(:video, user: @user)
       subject.videos << @video
     end
     
@@ -90,11 +90,12 @@ describe Question do
       it { should_not be_valid }
     end
     
-    describe "tagged_with " do
+    describe "tagged_with" do
       it "finds a tag by name" do
-        @tag = create(:tag, name: "shank")
-        subject.tags << @tag
-        Question.tagged_with(@tag.name).should include subject
+        question = create(:question)
+        tag = create(:tag, name: "shank")
+        question.tags << tag
+        Question.tagged_with(tag.name).should include question
       end
     end
     
@@ -122,20 +123,20 @@ describe Question do
 
     describe "Scopes" do
       before(:each) do
-        @user1 = create(:user)
-        create_questions(@user1) # sets the q1 etc instance vars
+        @user = create(:user)
+        create_questions(@user)
       end
       
       it "returns unanswered questions" do 
-        Question.unanswered.should include(@q2, subject, @q3)
+        Question.unanswered.should include(@q2, @q3)
       end
     
       it "returns questions by votes" do 
-        Question.popular.should include(subject, @q3, @q2, @q1)
+        Question.popular.should include(@q3, @q2, @q1)
       end
     
       it "newest returns questions by date" do 
-        Question.newest.should == [@q3, @q2, @q1, subject] 
+        Question.newest.should == [@q3, @q2, @q1] 
       end
    end
 end

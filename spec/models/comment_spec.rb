@@ -2,10 +2,10 @@ require 'spec_helper'
 
 describe Comment do
   before(:each) do
-    @user1 = create(:user, username: "dodgerogers747")
-    @user2 = create(:user, username: "randyrogers")
-    @question = create(:question, user: @user1, title: "My swing is too short", body: "my flexibility isn't great")
-    @comment = create(:comment, commentable_id: @question.id, content: "this is a comment for @randyrogers", user: @user1)
+    @user1 = build(:user, username: "dodgerogers747")
+    @user2 = build(:user, username: "randyrogers")
+    @question = build(:question, user: @user1, title: "My swing is too short", body: "my flexibility isn't great")
+    @comment = build(:comment, commentable: @question, content: "this is a comment for @randyrogers", user: @user1)
     Comment.any_instance.stub(:display_mentions).and_return(@comment)
   end
   
@@ -69,7 +69,7 @@ describe Comment do
   describe "mentions" do
     describe "display_mentions" do
       it "containing valid user" do
-        subject.display_mentions.content.should eq("this is a comment for <a href='/users/#{@user2.id}-#{@user2.username}'>@#{@user2.username}</a>")
+        subject.display_mentions.content.should include "@#{@user2.username}"
       end
     
       it "no valid users" do
@@ -78,8 +78,10 @@ describe Comment do
       end
       
       it "contains duplicate users" do
-        comment = FactoryGirl.build(:comment, content: "hey @randyrogers this is a comment @randyrogers", commentable_id: @question.id)
-        comment.valid?
+        Comment.any_instance.unstub(:display_mentions)
+        comment = FactoryGirl.build(:comment, user_id: 1, content: "hey @randyrogers this is a comment @randyrogers", commentable_id: 1)
+        
+        comment.valid?.should eq false
         comment.errors[:content].should eq ["You can only mention someone once"]
       end
     end

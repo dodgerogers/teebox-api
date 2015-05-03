@@ -1,9 +1,9 @@
 class Comment < ActiveRecord::Base
-  
-  #include PublicActivity::Common
   require 'obscenity/active_model'
   
   #attr_accessible :content, :votes_count, :parent_id, :commentable_id, :commentable_type, :points
+  
+  MENTION_LIMIT_ERROR = "You can only mention someone once"
   
   belongs_to :user
   belongs_to :commentable, polymorphic: true, counter_cache: true
@@ -23,13 +23,17 @@ class Comment < ActiveRecord::Base
   default_scope { order("created_at") }
   
   def find_mentions
-    @mentions ||= self.content.scan(/@([a-z0-9_]+)/i).flatten
+    if content.blank?
+      return []
+    else  
+      @mentions ||= content.scan(/@([a-z0-9_]+)/i).flatten
+    end
   end
   
   def mentions_limit
     return unless errors.blank?
     if find_mentions.uniq.length != find_mentions.length
-      errors.add(:content, "You can only mention someone once") 
+      errors.add(:content, MENTION_LIMIT_ERROR) 
     end
   end
   
