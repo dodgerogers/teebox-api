@@ -7,6 +7,7 @@ module Api
       render json: @points, status: 200
     end
   
+    # Should be moved into the index method with a repo method
     def breakdown
       @points = current_user.points.limit(5)
       render json: @points, status: 200

@@ -1,5 +1,11 @@
 Rails.application.routes.draw do
-  devise_for :users, path_prefix: 'api'
+  devise_for :users, 
+    path_prefix: 'api', 
+    controllers: { 
+      sessions: 'api/sessions', 
+      registrations: 'api/registrations' 
+    }
+    
   match '(errors)/:status', to: 'errors#show', constraints: { status: /\d{3}/ }, via: :all
     
   namespace :api, defaults: { format: 'json' }  do

@@ -10,13 +10,17 @@ class Ability
       can :manage, :all
       
     elsif user.role == 'standard'
-      
       # Logged in users can read pretty much everything
       
       # Questions
       can [:new, :create, :popular, :unanswered, :read,  :related], Question
       can [:update, :edit, :destroy, :correct], Question do |question|
         question.try(:user) == user
+      end
+      
+      # Activity
+      can [:index, :read], Activity do |activity|
+        activity.try(:user) == user
       end
       
       # Articles
