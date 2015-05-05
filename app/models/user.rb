@@ -9,9 +9,7 @@ class User < ActiveRecord::Base
   
   devise :database_authenticatable, :registerable, :confirmable, :recoverable, :rememberable, :trackable, :validatable
              
-  acts_as_token_authenticatable      
-  
-  #attr_accessible :email, :password, :password_confirmation, :remember_me, :username, :reputation, :rank
+  acts_as_token_authenticatable
   
   serializeable :preferences, { notifications: "1" }
   
@@ -40,6 +38,12 @@ class User < ActiveRecord::Base
     self.role == ADMIN
   end
   
+  def ensure_authentication_token
+    if authentication_token.blank?
+      self.authentication_token = generate_authentication_token
+    end
+  end
+  
   # ==== Should override these 2 methods devise controller and call super then perform this. ==== #
   def create_welcome_notification
     repo = ActivityRepository.new(self)
@@ -51,6 +55,7 @@ class User < ActiveRecord::Base
   end
   # ==== end ==== #
   
+  # TODO: Should be able to do this in one go
   def self.rank_by_reputation
     results = {}
     self.order("reputation desc").each do |user| 
@@ -70,5 +75,14 @@ class User < ActiveRecord::Base
       link: 'here', 
       text: 'Need a refresher on how it works? Click' 
     }
+  end
+  
+  private 
+  
+  def generate_authentication_token
+    loop do
+      token = Devise.friendly_token
+      break token unless User.where(authentication_token: token).first
+    end
   end
 end

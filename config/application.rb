@@ -24,6 +24,10 @@ module TeeboxApi
     config.autoload_paths += %W(#{config.root}/lib)
     
     config.exceptions_app = self.routes
+    
+    config.to_prepare do
+       DeviseController.respond_to :json
+    end
 
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.

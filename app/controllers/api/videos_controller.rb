@@ -1,9 +1,10 @@
 module Api
   class VideosController < ApplicationController
+    before_action :user_authenticated?
     load_and_authorize_resource
   
     def show
-      @video = Video.find params[:id]
+      @video = current_user.videos.find params[:id]
       render json: @video
     end
   
@@ -24,7 +25,7 @@ module Api
     end
   
     def update
-      @video = Video.find params[:id]
+      @video = current_user.videos.find params[:id]
       if @video.update_attributes video_params
          render json: @video
       else
@@ -34,7 +35,7 @@ module Api
   
     def destroy
       # ======= Should be in an repo ====== #
-      @video = Video.find params[:id]
+      @video = current_user.videos.find params[:id]
       if @video.destroy
         @video.delete_aws_key
         render json: {}, status: 200

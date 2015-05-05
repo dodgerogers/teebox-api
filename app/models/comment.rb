@@ -37,6 +37,15 @@ class Comment < ActiveRecord::Base
     end
   end
   
+  def notification_message_format
+    { 
+      link: (self.commentable.respond_to?(:title) ? self.commentable.try(:title) : self.commentable.try(:body)), 
+      text: 'commented on' 
+    }
+  end
+  
+  private
+  
   def display_mentions
     find_mentions.each do |u|
       user = User.where(username: u)[0]
@@ -51,12 +60,5 @@ class Comment < ActiveRecord::Base
       end
     end
     self.save!
-  end
-  
-  def notification_message_format
-    { 
-      link: (self.commentable.respond_to?(:title) ? self.commentable.try(:title) : self.commentable.try(:body)), 
-      text: 'commented on' 
-    }
   end
 end

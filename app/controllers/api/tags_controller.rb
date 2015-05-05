@@ -8,7 +8,10 @@ module Api
     end
   
     def index
-      @tags = Tag.order("name").paginate(page: params[:page], per_page: 21).text_search(params[:search])
+      # Need a repo search by method
+      @tags = Tag.order("name")
+      @tags = @tags.search(params[:search]) if params[:search]
+      @tags = @tags.paginate(page: params[:page], per_page: params[:per_page] || Tag.count)
       render json: @tags
     end
   
@@ -40,6 +43,7 @@ module Api
     end
   
     def question_tags
+      # Add this to the search by repo method
       @tags = Tag.order(:name)
       render json: @tags.tokens(params[:q])
     end
@@ -47,7 +51,7 @@ module Api
     private 
     
     def tag_params
-      defaults = { updated_by: current_user.username, user_id: current_user.id }
+      defaults = { updated_by: current_user.try(:username), user_id: current_user.try(:id) }
       params.require(:tag).permit(:name, :explanation, :updated_by, :user_id).merge(defaults)
     end
   end

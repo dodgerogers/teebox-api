@@ -56,17 +56,17 @@ describe Tag do
      end
    end
    
-   describe "text_search" do
+   describe "search" do
      before(:each) do
        @tag2 = create(:tag, name: "Putting")
      end
       
      it 'should return similar tags' do
-       Tag.text_search("Putting").should include(@tag2)
+       Tag.search("Putting").should include(@tag2)
      end
      
      it "shoud return an empty array when no matches found" do
-       Tag.text_search("No matches").should eq []
+       Tag.search("No matches").should eq []
      end
    end
 end
