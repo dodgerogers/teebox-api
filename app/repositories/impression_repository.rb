@@ -2,6 +2,7 @@ class ImpressionRepository < BaseRepository
   ERROR_MSG_GENERIC = "ImpressionRepository error: %s"
   IMPRESSIONS_NOT_IMPLEMENTED = '#impressions relationship not implemented'
   
+  # FACTORY
   def self.create(record, request)
     raise ArgumentError unless request && request.remote_ip
     

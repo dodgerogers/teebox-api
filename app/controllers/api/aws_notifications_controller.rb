@@ -2,6 +2,8 @@ require "json"
 
 module Api
   class AwsNotificationsController < ApplicationController
+    skip_before_action :authenticate_user!
+    
     def end_point
       notification = JSON.parse(request.raw_post, symbolize_names: true)
     

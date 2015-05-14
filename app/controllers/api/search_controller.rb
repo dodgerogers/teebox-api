@@ -1,5 +1,8 @@
 module Api
   class SearchController < ApplicationController
+    
+    skip_before_action :authenticate_user!
+    
     def index
       @result = GlobalSearch.call params
       if @result.success?

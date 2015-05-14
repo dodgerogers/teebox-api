@@ -1,6 +1,5 @@
 module Api
   class VideosController < ApplicationController
-    before_action :user_authenticated?
     load_and_authorize_resource
   
     def show

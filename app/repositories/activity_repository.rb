@@ -4,6 +4,7 @@ class ActivityRepository < BaseRepository
     @instance = instance
   end
   
+  # FACTORY
   def generate(action, opts={})
     owner, recipient = opts.values_at(:owner, :recipient)
     raise ArgumentError, 'You must provide an instance object' unless @instance

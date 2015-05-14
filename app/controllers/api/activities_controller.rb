@@ -1,7 +1,7 @@
 module Api
   class ActivitiesController < ApplicationController
     include ActivityHelper
-    before_action :user_authenticated?
+    
     load_and_authorize_resource
     
     def index

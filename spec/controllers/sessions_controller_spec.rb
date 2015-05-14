@@ -7,26 +7,31 @@ describe Api::SessionsController do
   
   describe "sign_in" do
     context 'success' do
-      it 'returns 200 generates a new token' do
-        token_before = @user.authentication_token
-        User.any_instance.stub(:authentication_token).and_return nil
+      it 'returns 200 & generates a new token' do
+        @user.invalidate_token!
         
         get :create, username: @user.username, password: @user.password
         
         response.should be_success
         result = JSON.parse response.body
-        result.should include "authentication_token"
-        result["authentication_token"].should_not eq token_before
+        user_token = result["user_token"]
+        user_token.should include "authentication_token"
+        user_token["authentication_token"].should_not be_nil
       end
       
       it 'returns 200 if you already have a token' do
-        @user.authentication_token = 'already-have-a-valid-token'
+        valid_existing_token = 'already-have-a-valid-token'
+        @user.authentication_token = valid_existing_token
+        @user.save
         
         get :create, username: @user.username, password: @user.password
         
         response.status.should eq 200
         result = JSON.parse response.body
-        result["message"].should include "You are already signed in"
+        
+        user_token = result["user_token"]
+        user_token.should include "authentication_token"
+        user_token["authentication_token"].should eq valid_existing_token
       end
     end
     
