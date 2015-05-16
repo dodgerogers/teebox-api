@@ -17,11 +17,12 @@ class ActivityRepository < BaseRepository
   
   def find_and_update(params)
     result = find_by_id params.slice :id
+    return result unless result.success?
+    
     activity = result.entity
-    
     activity.assign_attributes params
-    self.fail message: error_messages(activity) unless save(activity)
     
+    self.fail message: error_messages(activity) unless save(activity)
     self.entity = activity
     return self
   end

@@ -10,9 +10,9 @@ describe ToggleAnswerCorrect do
   
   describe "#toggle" do
     it "should toggle answer and question correct fields when false" do
-      AnswerRepository.should_receive(:find_by).with(id: @answer.id).and_return([@answer, true])
-      
-      result = ToggleAnswerCorrect.call({id: @answer.id})
+      mock_repo = double entity: @answer, success?: true
+      AnswerRepository.any_instance.should_receive(:find_by_id).with(id: @answer.id).and_return mock_repo
+      result = ToggleAnswerCorrect.call id: @answer.id, current_user: @user2
       
       answer = result.answer
       answer.reload
@@ -22,10 +22,11 @@ describe ToggleAnswerCorrect do
     
     it "should toggle answer and question correct fields and not call update points when same user" do
       answer = create(:answer, question: @question, user: @user1)
-      AnswerRepository.should_receive(:find_by).with(id: answer.id).and_return([answer, true])
+      mock_repo = double entity: answer, success?: true
+      AnswerRepository.any_instance.should_receive(:find_by_id).with(id: answer.id).and_return mock_repo
       PointRepository.should_receive(:mass_update).never
       
-      result = ToggleAnswerCorrect.call({id: answer.id})
+      result = ToggleAnswerCorrect.call id: answer.id, current_user: @user1
       
       answer = result.answer
       answer.reload
@@ -38,9 +39,10 @@ describe ToggleAnswerCorrect do
       question = create(:question, user: @user2, correct: true)
       answer = create(:answer, question_id: question.id, user: user3, correct: true)
       
-      AnswerRepository.should_receive(:find_by).with(id: answer.id).and_return([answer, true])
+      mock_repo = double entity: answer, success?: true
+      AnswerRepository.any_instance.should_receive(:find_by_id).with(id: answer.id).and_return mock_repo
       
-      result = ToggleAnswerCorrect.call(id: answer.id)
+      result = ToggleAnswerCorrect.call id: answer.id, current_user: @user2
       result.success?.should eq true
       
       answer = result.answer
@@ -50,10 +52,11 @@ describe ToggleAnswerCorrect do
     end
     
     it "rolls back transaction if toggle_correct fails" do
-      AnswerRepository.should_receive(:find_by).with(id: @answer.id).and_return([@answer, true])
-      @answer.should_receive(:save).and_return(false)
+      mock_repo = double entity: @answer, success?: true
+      AnswerRepository.any_instance.should_receive(:find_by_id).with(id: @answer.id).and_return mock_repo
+      Answer.any_instance.should_receive(:save).and_return(false)
       
-      result = ToggleAnswerCorrect.call(id: @answer.id) 
+      result = ToggleAnswerCorrect.call id: @answer.id, current_user: @user2
       
       result.success?.should eq false
       @answer.reload
@@ -62,10 +65,12 @@ describe ToggleAnswerCorrect do
     end
     
     it "rolls back transaction if PointRepository.mass_update fails" do
-      AnswerRepository.should_receive(:find_by).with(id: @answer.id).and_return([@answer, true])
+      mock_repo = double entity: @answer, success?: true
+      
+      AnswerRepository.any_instance.should_receive(:find_by_id).with(id: @answer.id).and_return mock_repo
       PointRepository.should_receive(:mass_update).and_return(false)
       
-      result = ToggleAnswerCorrect.call(id: @answer.id) 
+      result = ToggleAnswerCorrect.call id: @answer.id, current_user: @user2
       
       result.success?.should eq false
       @answer.reload
