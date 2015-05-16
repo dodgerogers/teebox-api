@@ -18,10 +18,7 @@ module TeeboxApi
     # -- all .rb files in that directory are automatically loaded.
     
     # Custom directories with classes and modules you want to be autoloadable.
-    config.autoload_paths += %W(#{config.root}/decorators)
-    config.autoload_paths += %W(#{config.root}/repositories)
-    config.autoload_paths += %W(#{config.root}/interactors)
-    config.autoload_paths += %W(#{config.root}/lib)
+    config.autoload_paths += %W(#{config.root}/factories #{config.root}/repositories #{config.root}/interactors #{config.root}/lib)
     
     config.exceptions_app = self.routes
     

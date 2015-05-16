@@ -60,12 +60,12 @@ class User < ActiveRecord::Base
   
   # ==== Should move to the user factory. ==== #
   def create_welcome_notification
-    repo = ActivityRepository.new self
-    repo.generate :create, recipient: self
+    factory = ActivityFactory.new self
+    factory.generate :create, recipient: self
   end
   
   def send_on_create_confirmation_instructions
-    Devise::Mailer.delay.confirmation_instructions self
+    Devise::Mailer.delay.confirmation_instructions self, self.authentication_token
   end
   # ==== end ==== #
   

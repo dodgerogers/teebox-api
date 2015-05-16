@@ -12,7 +12,7 @@ module Api
     def create 
       @comment = current_user.comments.build comment_params
       if @comment.save
-        repo = ActivityRepository.new @comment
+        repo = ActivityFactory.new @comment
         repo.generate :create, owner: current_user, recipient: @comment.commentable.user
         render json: @comment
       else

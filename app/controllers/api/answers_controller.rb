@@ -12,7 +12,7 @@ module Api
       @answer = current_user.answers.build answer_params
       if @answer.save
         PointRepository.create @answer.user, @answer
-        repo = ActivityRepository.new @answer
+        repo = ActivityFactory.new @answer
         repo.generate :create, owner: current_user, recipient: @answer.question.user
         render json: @answer
       else

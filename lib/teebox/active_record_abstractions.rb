@@ -27,5 +27,9 @@ module Teebox
       query = records.order attrs
       query
     end
+    
+    def error_messages(record)
+      record.errors.full_messages
+    end
   end
 end

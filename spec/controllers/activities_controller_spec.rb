@@ -15,7 +15,15 @@ describe Api::ActivitiesController do
   end
 
   describe "GET index" do
-    it "renders index template" do
+    it "returns 200 and activities" do
+      get :index, @params
+      
+      response.status.should eq 200
+      data = JSON.parse response.body
+      data["activities"].size.should eq 1
+    end
+    
+    it "returns 422 when repo fails" do
       get :index, @params
       
       response.status.should eq 200
@@ -25,23 +33,25 @@ describe Api::ActivitiesController do
   end
   
   describe "read" do
-    describe "with valid params" do
-      it "assigns the requested activity as @activity" do
-        get :read, @params.merge!(id: @activity)
+    context "success" do
+      it "returns 200 and activity" do
+        get :read, @params.merge!(id: @activity.id)
         
         response.status.should eq 200
         data = JSON.parse response.body
-        data["id"].should eq @activity.id
+        activity = data["activity"]
+        activity["read"].should eq true
       end
     end
       
-    describe "with invalid params" do
-      it "redirects to root" do
+    context "failure" do
+      it "returns 422 and errors" do
         Activity.any_instance.stub(:save).and_return(false)
-        put :read, @params.merge!(id: @activity)
+        put :read, @params.merge!(id: @activity.id)
         
-        @activity.reload
         response.status.should eq 422
+        data = JSON.parse response.body
+        data.should include "errors"
       end
     end
   end

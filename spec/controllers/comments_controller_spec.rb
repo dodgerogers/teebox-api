@@ -37,7 +37,7 @@ describe Api::CommentsController do
       end
       
       it "calls point and notification creation methods when owner is not equal to the recipient" do        
-        ActivityRepository.any_instance.should_receive(:generate).and_return(create(:activity))
+        ActivityFactory.any_instance.should_receive(:generate).and_return(create(:activity))
         
         post :create, @params.merge(comment: { content: "this is a valid comment", commentable_id: @commentable.id, commentable_type: @commentable.class.to_s })
         

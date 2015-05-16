@@ -204,7 +204,7 @@ describe Api::ArticlesController do
         
         it "calls point and notification creation methods when differing answer and question users" do
           ArticleRepository.stub(:transition).and_return(true, 'Successful')
-          ActivityRepository.any_instance.should_receive(:generate)
+          ActivityFactory.any_instance.should_receive(:generate)
 
           put :publish, @params.merge(id: @article.id)
 

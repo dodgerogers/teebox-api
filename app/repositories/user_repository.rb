@@ -1,7 +1,4 @@
-class UserRepository
-  include Teebox::ActiveRecordAbstractions
-  include Teebox::Repository
-
+class UserRepository < BaseRepository
   declare User
   
   NOT_FOUND = "User with ID: %s not found"

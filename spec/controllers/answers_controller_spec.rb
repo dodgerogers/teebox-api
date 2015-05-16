@@ -44,7 +44,7 @@ describe Api::AnswersController do
       it "calls point and notification creation methods when differing answer and question users" do
         question = create(:question, user: @user2)
         PointRepository.should_receive(:create)
-        ActivityRepository.any_instance.should_receive(:generate)
+        ActivityFactory.any_instance.should_receive(:generate)
         
         post :create, @params.merge(answer: { question_id: question.id, body: "Here is a valid answer..." })
         
