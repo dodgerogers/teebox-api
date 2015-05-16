@@ -1,23 +1,34 @@
 module Api
   class ActivitiesController < ApplicationController
     include ActivityHelper
-    
     load_and_authorize_resource
     
     def index
-      @activities = current_user.activities.paginate(page: params[:page], per_page: (params[:per_page] || 20))
-      render json: @activities
+      repo = ActivityRepository.new current_user
+      result = repo.find_all
+      
+      if result.success?
+        render json: result.collection
+      else
+        render json: { errors: result.errors[:message] }, status: 422
+      end
     end
   
     def read
-      # Interactor which calls a find by and then read_activity on the result
-      @activity = current_user.activities.find params[:id] 
-      @activity.read_activity
-      if @activity.save
-        render json: @activity
+      repo = ActivityRepository.new current_user
+      result = repo.find_and_update activity_params.merge(read: true)
+      
+      if result.success?
+        render json: result.entity
       else
-        render json: { errors: @activity.errors.full_messages }, status: 422
+        render json: { errors: result.errors[:message] }, status: 422
       end
+    end
+    
+    private
+    
+    def activity_params
+      params.permit(:id)
     end
   end
 end

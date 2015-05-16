@@ -66,7 +66,7 @@ module Api
   
     def publish
       transition :publish do |article|
-        repo = ActivityRepository.new article
+        repo = ActivityFactory.new article
         repo.generate :create, owner: current_user, recipient: article.user 
       end
     end

@@ -76,7 +76,7 @@ describe User do
   
   describe "create_welcome_notification" do
     it "triggers ActivityRepository#generate" do
-      ActivityRepository.any_instance.should_receive(:generate)
+      ActivityFactory.any_instance.should_receive(:generate)
       subject.create_welcome_notification
     end
   end
