@@ -1,6 +1,7 @@
 module Api
   class AnswersController < ApplicationController
-    load_and_authorize_resource only: [:create, :update, :destroy, :correct]
+    
+    load_and_authorize_resource #only: [:create, :update, :destroy, :correct]
     
     def show
       @answer = Answer.find params[:id]

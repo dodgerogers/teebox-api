@@ -1,6 +1,6 @@
 module Api
   class SignedUrlsController < ApplicationController
-    before_action :user_authenticated?
+    before_action :authenticate_user!
     
     def index
       render json: {

@@ -1,5 +1,7 @@
 module Api
   class CommentsController < ApplicationController
+    
+    before_action :authenticate_user!
     load_and_authorize_resource only: [:create, :destroy]
   
     def show

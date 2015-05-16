@@ -1,6 +1,8 @@
 module Api
   class QuestionsController < ApplicationController
-    load_and_authorize_resource except: [:index, :show, :related]
+    
+    before_action :authenticate_user!, except: [:index, :show]
+    load_and_authorize_resource except: [:index, :show]
   
     def index
       @questions = Question.all.includes(:user, :videos, :answers, :comments).paginate(page: params[:page], per_page: 20)

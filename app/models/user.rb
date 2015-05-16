@@ -5,11 +5,11 @@ class User < ActiveRecord::Base
   TESTER = 'tester'
   STANDARD = 'standard'
   
+  INVALIDATE_TOKEN = nil
+  
   ROLES = [ADMIN, TESTER, STANDARD]
   
   devise :database_authenticatable, :registerable, :confirmable, :recoverable, :rememberable, :trackable, :validatable
-             
-  acts_as_token_authenticatable
   
   serializeable :preferences, { notifications: "1" }
   
@@ -25,7 +25,7 @@ class User < ActiveRecord::Base
   has_many :points, dependent: :destroy
   has_many :activities, foreign_key: :recipient_id, dependent: :destroy
 
-  before_save :ensure_authentication_token
+  before_create :ensure_authentication_token!
   after_create :create_welcome_notification
   
   searchable :username
@@ -38,20 +38,34 @@ class User < ActiveRecord::Base
     self.role == ADMIN
   end
   
-  def ensure_authentication_token
-    if authentication_token.blank?
-      self.authentication_token = generate_authentication_token
+  def invalid_token?
+    authentication_token == INVALIDATE_TOKEN
+  end
+  
+  def invalidate_token!
+    self.authentication_token = INVALIDATE_TOKEN
+    self.save!
+  end
+  
+  def reset_auth_token!
+    ensure_authentication_token! do |user|
+      user.save
     end
   end
   
-  # ==== Should override these 2 methods devise controller and call super then perform this. ==== #
+  def ensure_authentication_token!
+    self.authentication_token = generate_auth_token
+    yield self if block_given?
+  end
+  
+  # ==== Should move to the user factory. ==== #
   def create_welcome_notification
-    repo = ActivityRepository.new(self)
-    repo.generate(:create, recipient: self)
+    repo = ActivityRepository.new self
+    repo.generate :create, recipient: self
   end
   
   def send_on_create_confirmation_instructions
-    Devise::Mailer.delay.confirmation_instructions(self)
+    Devise::Mailer.delay.confirmation_instructions self
   end
   # ==== end ==== #
   
@@ -79,10 +93,10 @@ class User < ActiveRecord::Base
   
   private 
   
-  def generate_authentication_token
+  def generate_auth_token
     loop do
       token = Devise.friendly_token
-      break token unless User.where(authentication_token: token).first
+      break token unless User.where(authentication_token: token).exists?
     end
   end
 end

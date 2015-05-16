@@ -1,5 +1,7 @@
 module Api
   class TagsController < ApplicationController
+    
+    before_action :authenticate_user!, only: [:create, :update, :destroy]
     load_and_authorize_resource only: [:create, :update, :destroy]
   
     def show

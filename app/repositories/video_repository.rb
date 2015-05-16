@@ -1,5 +1,6 @@
 class VideoRepository < BaseRepository
   
+  # Should be a interactor
   def self.find_by_job_and_update(attrs)
     raise ArgumentError, "#{attrs.class} is not a valid args hash" unless attrs.is_a?(Hash)
     video = Video.where(job_id: attrs[:job_id]).first
