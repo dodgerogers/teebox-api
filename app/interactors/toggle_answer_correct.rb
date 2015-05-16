@@ -11,9 +11,11 @@ class ToggleAnswerCorrect
       context.fail!(error: sprintf(STANDARD_ERR, 'You must provide an id'))
     end
     
-    answer, success = AnswerRepository.find_by(id: context[:id])
+    repo = AnswerRepository.new context[:current_user]
+    result = repo.find_by id: context[:id]
     
-    if answer && success 
+    if result.success?
+      answer = result.entity
       raise ArgumentError, sprintf(STANDARD_ERR, INVALID_RELATION) unless answer.question
       
       ActiveRecord::Base.transaction do
