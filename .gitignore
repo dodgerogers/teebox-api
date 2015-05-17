@@ -24,10 +24,8 @@
 #ignore coverage test results
 /coverage/*
 
-#ignore database.yml
+#ignore configs
 /config/database.yml
-
-# Ignore application configuration
 /config/application.yml
 /config/secrets.yml
 
